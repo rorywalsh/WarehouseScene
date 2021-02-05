@@ -99,9 +99,12 @@
                 camera.keysRight.push(68); //S
 
                 camera.position = new BABYLON.Vector3(-0.95, -0.35, -2.87);
-                camera.speed = 0.05;
+                camera.speed = 0.025;
                 setTimeout(function() {
                     engine.hideLoadingUI();
+                    csound.readScore('f1 0 0 1 "mine.wav" 0 4 1')
+                    csound.readScore('i"FootstepSequencer" 0 3600');
+                    csound.readScore('i"LowRumble" 0 3600');
                 }, 2000);
             });
 

@@ -36,6 +36,14 @@ instr Footsteps
     outs aHp, aHp
 endin
 
+instr LowRumble
+    a1 pinker
+    a2 butterlp a1, 100
+    outs a2, a2
+endin
+
+
+
 `;
 
 let csound;
@@ -47,11 +55,10 @@ CsoundObj.initialize().then(async() => {
     csound = new CsoundObj();
     csound.setOption('-m0d');
     csound.setOption('-m0d');
-    await loadResources(csound, ['hello.ogg', 'warehouseIR.wav']);
+    await loadResources(csound, ['hello.ogg', 'mine.wav']);
     csound.compileOrc(orcCode);
     csound.start();
-    csound.readScore('f1 0 0 1 "warehouseIR.wav" 0 4 1')
-    csound.readScore('i"FootstepSequencer" 0 3600');
+
 
     isLoaded = true;
 });
