@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+    <script src="https://unpkg.com/@kunstmusik/csound@6.15.0/CsoundObj.js"></script>
+
+    <!-- Babylon.js -->
+    <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script src="audio.js"></script>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() {
+            return new BABYLON.Engine(canvas, true, {
+                preserveDrawingBuffer: true,
+                stencil: true,
+                disableWebGL2Support: false
+            });
+        };
+        // You have to create a function called createScene. This function must return a BABYLON.Scene object
+        // You can reference the following variables: engine, canvas
+        // You must at least define a camera
+
+        var createScene = function() {
+            var scene = new BABYLON.Scene(engine);
+            engine.displayLoadingUI();
+
+
+
+            //Adding a light
+            //var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+            var light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -1, -0.3), scene);
+            let camera;
+            //Adding an Arc Rotate Camera
+            //var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, BABYLON.Vector3.Zero(), scene);
+
+            //var camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0, 0.8, 100), scene);
+
+            // camera.attachControl(canvas, true);
+            // scene.activeCamera = camera;
+            // camera.keysUp.push(87); //W
+            // camera.keysDown.push(83) //D
+            // camera.keysLeft.push(65); //A
+            // camera.keysRight.push(68); //S
+            // The first parameter can be used to specify which mesh to import. Here we import all meshes
+            BABYLON.SceneLoader.ImportMesh("", "/", "scene.gltf", scene, function(newMeshes) {
+                // Set the target of the camera to the first imported mesh
+                //camera.target = newMeshes[0];
+                console.log("loaded");
+                //scene.setActiveCameraByID(0);
+                scene.createDefaultCameraOrLight(false, true, true);
+                camera = scene.activeCamera;
+                //camera.position = newMeshes[0].position;
+                camera.attachControl(canvas, true);
+                scene.activeCamera = camera;
+                camera.keysUp.push(87); //W
+                camera.keysDown.push(83) //D
+                camera.keysLeft.push(65); //A
+                camera.keysRight.push(68); //S
+
+                camera.position = new BABYLON.Vector3(-0.95, -0.35, -2.87);
+                camera.speed = 0.05;
+                setTimeout(function() {
+                    engine.hideLoadingUI();
+                }, 2000);
+            });
+
+
+            // Move the light with the camera
+            scene.registerBeforeRender(function() {
+                light.position = camera.position;
+                scene.activeCamera.position.y = -0.35;
+            });
+
+            scene.onKeyboardObservable.add((kbInfo) => {
+                console.log(kbInfo.type);
+                if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN) {
+                    csound.setControlChannel("walking", 1);
+                    if (kbInfo.event.keyCode === 'UpArrow' || kbInfo.event.keyCode == 87) {
+
+                        console.log("KEY DOWN: ", kbInfo.event.key);
+                        console.log('Player Position X:', camera.position.x.toFixed(2), 'Y:', camera.position.y.toFixed(2), 'Z:', camera.position.z.toFixed(2));
+                    } else if (kbInfo.event.keyCode == 49 || kbInfo.event.keyCode == 50 || kbInfo.event.keyCode == 51 || kbInfo.event.keyCode == 52 || kbInfo.event.keyCode == 53) {
+                        let amount = [0, 0.1, 0.3, 0.6, 0.99];
+                        let amountIndex = event.keyCode - 49;
+                        if (csound && isLoaded === true) {
+                            csound.audioContext.resume();
+                            csound.readScore('i"SayHello" 0 10 ' + amount[amountIndex].toString());
+                            console.log("playing sound");
+                        }
+                    }
+                } else if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYUP) {
+                    csound.setControlChannel("walking", 0);
+                    if (kbInfo.event.keyCode === 'UpArrow' || kbInfo.event.keyCode == 87) {
+                        console.log("KEY UP: ", kbInfo.event.key);
+                    }
+                }
+
+            });
+
+            return scene;
+        };
+
+
+
+        var engine;
+        var scene;
+        initFunction = async function() {
+            var asyncEngineCreation = async function() {
+                try {
+                    return createDefaultEngine();
+                } catch (e) {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+
+            engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            scene = createScene();
+        };
+        initFunction().then(() => {
+            sceneToRender = scene
+            engine.runRenderLoop(function() {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function() {
+            engine.resize();
+        });
+    </script>
+</body>
+
+</html>
